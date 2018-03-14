@@ -40,12 +40,22 @@ public class A1 extends AppCompatActivity {
             this.startService(serviceIntent);
         }
 
-
         addListenerOnButton();
 
-        getUserPreference();
-        stringToJson(xml);
-        updateListView();
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                getUserPreference();
+                                stringToJson(xml);
+                                updateListView();
+                            }
+                        });
+                    }
+                }, 500);
 
 
     }

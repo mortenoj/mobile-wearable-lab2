@@ -42,8 +42,8 @@ public class A2 extends AppCompatActivity {
             public void onClick(View v) {
                 createSharedPreferences();
 
+                stopService(new Intent(A2.this, MyService.class));
                 Intent intent = new Intent(A2.this, A1.class);
-                // intent.putExtra();
                 startActivity(intent);
             }
         });
