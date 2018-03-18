@@ -127,7 +127,7 @@ public class MyService extends Service {
             @Override
             public void onResponse(String response) {
                 // Check if old xml and new xml matches to send a notification if different
-                newString = response;
+                newString = response.replaceAll("\\s+", "");
                 stringsMatch = checkUrlDifference();
                 // Save shared prefs
                 createSharedPreferences(response);
@@ -184,7 +184,7 @@ public class MyService extends Service {
      * **/
     private boolean checkUrlDifference() {
         SharedPreferences sharedPref = getSharedPreferences("FileName",MODE_PRIVATE);
-        String current = sharedPref.getString("URL", "");
+        String current = sharedPref.getString("URL", "").replaceAll("//s+", "");
         return newString.equals(current);
     }
 
