@@ -36,15 +36,17 @@ public class MyService extends Service {
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "RSS Feed";
 
-    public MyService() {
+    public MyService() {}
 
-    }
-
+    /**
+     * onCreate automatic function that runs when service is created
+     * **/
     public void onCreate() {
-
+        // Variables for notification
         nBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
         nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
+        // sets notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, "RSS Feed", NotificationManager.IMPORTANCE_DEFAULT);
 
@@ -57,56 +59,77 @@ public class MyService extends Service {
             nManager.createNotificationChannel(notificationChannel);
         }
 
-        final Handler handler = new Handler();
 
+        // Avoids null pointer exception error when doing a request
         if (queue == null) {
             queue = Volley.newRequestQueue(this);
         }
 
+        // Handler variable used for postDelayed function
+        final Handler handler = new Handler();
+        // Runs repeatably every given minute
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                // Calls other function that runs the service
                 refresh();
-                handler.postDelayed(this, frequency * 60000);
+                handler.postDelayed(this, frequency * 60000); // delay on frequency times a minute
             }
         }, 0);
 
     }
 
+    /**
+     * onStartCommand default function
+     * **/
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
         return super.onStartCommand(intent, flags, startId);
     }
 
+    /**
+     * onDestroy default function that runs when service stops
+     * **/
     @Override
     public void onDestroy() {
         super.onDestroy();
     }
 
+    /**
+     * onBind default function that runs when service is binded
+     * **/
     @Override
     public IBinder onBind(Intent intent){
         return null;
     }
 
 
-
-
+    /**
+     * getUserPreference get user prefs from shared prefs
+     * **/
     public void getUserPreference() {
-
+        // Get shared prefs
         SharedPreferences sharedPref = getSharedPreferences("FileName",MODE_PRIVATE);
+        // Get values from shared prefs
         frequency = sharedPref.getInt("frequency", -1);
         itemLimit = sharedPref.getInt("limitItems",-1);
         rssUrl = sharedPref.getString("URL", "");
 
     }
 
+    /**
+     * getRssData function that makes request to given url and
+     * saves the xml to shared prefs
+     * **/
     public void getRssData(String url) {
 
         StringRequest req = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                // Check if old xml and new xml matches to send a notification if different
                 newString = response;
                 stringsMatch = checkUrlDifference();
+                // Save shared prefs
                 createSharedPreferences(response);
             }
         }, new Response.ErrorListener() {
@@ -116,11 +139,14 @@ public class MyService extends Service {
             }
         });
 
-
+        // Add request to queue
         queue.add(req);
 
     }
 
+    /**
+     * createSharedPreferences saves xml to shared prefs
+     * **/
     private void createSharedPreferences(String xml) {
         SharedPreferences sharedPref = getSharedPreferences("FileName",0);
 
@@ -130,12 +156,17 @@ public class MyService extends Service {
         prefEditor.apply();
     }
 
+    /**
+     * refresh function calls getUserPreference and getRssData
+     * checks if the old xml and new xml are different and notifies the client
+     * **/
     private void refresh() {
         getUserPreference();
         getRssData(rssUrl);
 
-
+        // If old xml and new xml doesn't match
         if (!stringsMatch) {
+            // Create and send a notification to user
             nBuilder.setSmallIcon(R.drawable.ic_launcher_background);
             nBuilder.setContentTitle("RSS Feeder");
             nBuilder.setContentText("New stories");
@@ -148,6 +179,9 @@ public class MyService extends Service {
         }
     }
 
+    /**
+     * checkUrlDifference gets url from shared prefs matches it with global variable newString
+     * **/
     private boolean checkUrlDifference() {
         SharedPreferences sharedPref = getSharedPreferences("FileName",MODE_PRIVATE);
         String current = sharedPref.getString("URL", "");
